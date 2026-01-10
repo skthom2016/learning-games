@@ -1,0 +1,91 @@
+.progress-overview-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  color: white;
+}
+
+.progress-overview-screen h1 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+.progress-summary {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  min-width: 400px;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.summary-icon {
+  font-size: 2rem;
+}
+
+.summary-value {
+  font-weight: bold;
+}
+
+.progress-overview-screen h2 {
+  font-size: 2rem;
+  margin: 2rem 0 1rem 0;
+}
+
+.topic-list {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 1.5rem;
+  min-width: 500px;
+  max-width: 600px;
+}
+
+.topic-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.topic-icon {
+  font-size: 1.5rem;
+  min-width: 30px;
+}
+
+.topic-name {
+  flex: 1;
+  font-size: 1.2rem;
+}
+
+.topic-status {
+  font-size: 1rem;
+  font-style: italic;
+}
+
+.back-button {
+  background: white;
+  color: #333;
+  border: none;
+  border-radius: 10px;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-top: 2rem;
+  transition: transform 0.2s;
+}
+
+.back-button:hover {
+  transform: scale(1.05);
+}

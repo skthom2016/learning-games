@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go build:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker compose:*)",
+      "Bash(curl:*)",
+      "Bash(PLAYER_ID=093c016e-9fad-4d17-821d-2549a33b3bb2:*)",
+      "Bash(lsof:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(sudo service postgresql status:*)",
+      "Bash(docker-compose version:*)",
+      "Bash(docker logs:*)",
+      "Bash(timeout:*)",
+      "Bash(findstr:*)",
+      "Bash(go mod:*)",
+      "Bash(set:*)",
+      "Bash(go run:*)",
+      "Bash(npm install:*)",
+      "Bash(npm start)",
+      "Bash(docker exec:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(docker start:*)",
+      "Bash(netstat:*)",
+      "Bash(tasklist:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd.exe //c \"taskkill /F /PID 53272 && taskkill /F /PID 44784\")",
+      "Bash(docker volume ls:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(psql:*)",
+      "Bash(where:*)",
+      "Bash(cat:*)",
+      "Bash(python:*)"
+    ]
+  }
+}

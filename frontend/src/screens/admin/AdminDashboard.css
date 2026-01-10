@@ -1,0 +1,85 @@
+.admin-dashboard {
+  min-height: 100vh;
+  background: #f5f5f5;
+  color: #333;
+}
+
+.admin-header {
+  background: white;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.admin-header button {
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.players-section {
+  padding: 2rem;
+}
+
+.players-section h2 {
+  margin-bottom: 1.5rem;
+}
+
+.player-cards-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 800px;
+}
+
+.player-card-admin {
+  background: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.player-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.3rem;
+}
+
+.player-info p {
+  margin: 0.25rem 0;
+  color: #666;
+}
+
+.player-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-direction: column;
+}
+
+.player-actions button {
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.player-actions button:hover {
+  background: #5568d3;
+}
+
+/* TODO: Add responsive styles */

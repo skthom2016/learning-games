@@ -1,0 +1,10 @@
+.App {
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* TODO: Add responsive layout styles */
+/* TODO: Add animation styles for star earning */
+/* TODO: Add child-friendly UI patterns */
