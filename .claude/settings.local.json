@@ -32,7 +32,12 @@
       "Bash(psql:*)",
       "Bash(where:*)",
       "Bash(cat:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(find:*)",
+      "Bash(docker-compose restart:*)",
+      "Bash(ping:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)"
     ]
   }
 }

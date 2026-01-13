@@ -1,6 +1,7 @@
 package rewards
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -129,7 +130,7 @@ func (e *RewardEngine) ConsolidateRewards(playerID string, starsToConsolidate in
 
 	// 2. Validate sufficient balance
 	if starsToConsolidate > unconsolidatedBalance {
-		return err // Insufficient balance
+		return fmt.Errorf("insufficient balance: want %d, have %d", starsToConsolidate, unconsolidatedBalance)
 	}
 
 	// 3. Get transaction IDs to consolidate (oldest first)
@@ -144,12 +145,12 @@ func (e *RewardEngine) ConsolidateRewards(playerID string, starsToConsolidate in
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
 
 	for rows.Next() {
 		var transID string
 		var amount int
 		if err := rows.Scan(&transID, &amount); err != nil {
+			rows.Close()
 			return err
 		}
 
@@ -161,12 +162,17 @@ func (e *RewardEngine) ConsolidateRewards(playerID string, starsToConsolidate in
 		}
 	}
 
+	// Explicitly close rows before continuing with transaction
+	if err := rows.Close(); err != nil {
+		return err
+	}
+
 	// 4. Create RewardResetEvent
-	eventID := uuid.New().String()
+	resetID := uuid.New().String()
 	eventQuery := `INSERT INTO reward_reset_events
-	               (event_id, player_id, stars_consolidated, real_world_reward, reset_at)
-	               VALUES ($1, $2, $3, $4, $5)`
-	_, err = tx.Exec(eventQuery, eventID, playerID, starsToConsolidate, realWorldReward, time.Now())
+	               (reset_id, player_id, reset_by, stars_consolidated, real_world_reward, reset_at)
+	               VALUES ($1, $2, $3, $4, $5, $6)`
+	_, err = tx.Exec(eventQuery, resetID, playerID, "admin", starsToConsolidate, realWorldReward, time.Now())
 	if err != nil {
 		return err
 	}

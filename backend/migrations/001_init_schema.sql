@@ -108,7 +108,7 @@ CREATE TABLE reward_transactions (
     earned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     game_id VARCHAR(50),
     topic_id VARCHAR(50),
-    attempt_id UUID REFERENCES attempt_records(attempt_id),
+    attempt_id UUID REFERENCES attempt_records(attempt_id) ON DELETE SET NULL,
     difficulty_tier INTEGER CHECK (difficulty_tier >= 1 AND difficulty_tier <= 5),
     confidence_recovery_mode BOOLEAN NOT NULL DEFAULT false,
     consolidated BOOLEAN NOT NULL DEFAULT false,

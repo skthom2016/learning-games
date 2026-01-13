@@ -4,27 +4,18 @@ import { api } from '../../api/client';
 import './RewardResetScreen.css';
 
 /**
- * RewardResetScreen - Admin consolidates virtual rewards into real rewards
- * See ARCHITECTURE.md Section 6 - Screen 11
- *
- * TODO:
- * - Fetch current unconsolidated star balance
- * - Input: number of stars to consolidate (validate <= balance)
- * - Input: description of real-world reward
- * - On submit, call API to create RewardResetEvent
- * - Show previous consolidation history
- * - Confirm before resetting
+ * RewardResetScreen - Admin resets/archives virtual rewards
+ * Simplified flow: Show balance, confirm, reset all unconsolidated stars
  */
 function RewardResetScreen() {
   const navigate = useNavigate();
   const { playerId } = useParams();
   const [player, setPlayer] = useState(null);
   const [balance, setBalance] = useState({ total: 0, unconsolidated: 0 });
-  const [starsToReset, setStarsToReset] = useState('');
-  const [rewardDescription, setRewardDescription] = useState('');
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -32,64 +23,104 @@ function RewardResetScreen() {
 
   const loadData = async () => {
     try {
-      // TODO: Fetch player, reward balance, and reset history
-      // const playerData = await api.getPlayer(playerId);
-      // const balanceData = await api.getRewardBalance(playerId);
+      setLoading(true);
+      setError(null);
 
-      // Mock data
-      setPlayer({ player_name: 'Emma' });
-      setBalance({ total: 1234, unconsolidated: 856 });
-      setHistory([
-        { date: '2025-12-20', stars: 500, reward: 'New puzzle book' },
-        { date: '2025-11-15', stars: 350, reward: 'Movie night' },
+      // Fetch player, reward balance, and analytics (which includes consolidation history)
+      const [playerResponse, balanceResponse, analyticsResponse] = await Promise.all([
+        api.getPlayer(playerId),
+        api.getRewardBalance(playerId),
+        api.getPlayerAnalytics(playerId),
       ]);
+
+      setPlayer(playerResponse.data);
+      setBalance({
+        total: balanceResponse.data.total_stars || 0,
+        unconsolidated: balanceResponse.data.unconsolidated_stars || 0,
+      });
+
+      // Get consolidation history from analytics
+      const consolidations = analyticsResponse.data.consolidations || [];
+      setHistory(consolidations.map(c => ({
+        date: new Date(c.reset_at).toLocaleDateString(),
+        stars: c.stars_consolidated,
+        reward: c.real_world_reward,
+      })));
+
       setLoading(false);
-    } catch (error) {
-      console.error('Failed to load data:', error);
+    } catch (err) {
+      console.error('Failed to load data:', err);
+      setError('Failed to load player data. Please try again.');
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const stars = parseInt(starsToReset, 10);
-    if (isNaN(stars) || stars <= 0) {
-      alert('Please enter a valid number of stars');
-      return;
-    }
-    if (stars > balance.unconsolidated) {
-      alert(`Cannot consolidate more than ${balance.unconsolidated} stars`);
-      return;
-    }
-    if (!rewardDescription.trim()) {
-      alert('Please describe the real-world reward');
+  const handleReset = async () => {
+    if (balance.unconsolidated === 0) {
+      alert('No stars to reset!');
       return;
     }
 
-    if (!window.confirm(`Confirm: Reset ${stars} stars for "${rewardDescription}"?`)) {
+    // Single confirmation
+    if (!window.confirm(
+      `Reset ${balance.unconsolidated} stars for ${player.player_name}?\n\n` +
+      `This will archive the current star balance. The stars will be marked as "redeemed" and won't count towards the visible balance anymore.\n\n` +
+      `This action is recorded for reporting purposes.`
+    )) {
       return;
     }
 
     try {
-      setSubmitting(true);
-      // TODO: Call API to reset rewards
-      // await api.resetRewards(playerId, stars, rewardDescription);
+      setResetting(true);
 
-      alert(`Successfully consolidated ${stars} stars!`);
-      setStarsToReset('');
-      setRewardDescription('');
-      loadData(); // Reload balance and history
-    } catch (error) {
-      console.error('Failed to reset rewards:', error);
-      alert('Failed to reset rewards');
+      // Call API to reset rewards
+      // Using a default reward description since we're simplifying the flow
+      await api.resetRewards(
+        playerId,
+        balance.unconsolidated,
+        `Reward reset on ${new Date().toLocaleDateString()}`
+      );
+
+      alert(`Successfully reset ${balance.unconsolidated} stars!`);
+
+      // Reload data to show updated balance and history
+      await loadData();
+    } catch (err) {
+      console.error('Failed to reset rewards:', err);
+
+      let errorMessage = 'Failed to reset rewards. ';
+      if (err.response?.data?.error) {
+        errorMessage += err.response.data.error;
+      } else {
+        errorMessage += 'Please try again.';
+      }
+
+      alert(errorMessage);
     } finally {
-      setSubmitting(false);
+      setResetting(false);
     }
   };
 
-  if (loading || !player) {
+  if (loading) {
     return <div className="loading">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="error-screen">
+        <p>{error}</p>
+        <button onClick={() => navigate('/admin')}>← Back to Dashboard</button>
+      </div>
+    );
+  }
+
+  if (!player) {
+    return (
+      <div className="error-screen">
+        <p>Player not found</p>
+        <button onClick={() => navigate('/admin')}>← Back to Dashboard</button>
+      </div>
+    );
   }
 
   return (
@@ -101,64 +132,59 @@ function RewardResetScreen() {
 
       <div className="reset-content">
         <section className="balance-section">
-          <h2>Current Balance:</h2>
+          <h2>Current Star Balance</h2>
           <div className="balance-display">
-            <p>⭐ Unconsolidated Stars: <strong>{balance.unconsolidated}</strong></p>
-            <p className="balance-note">(Total earned: {balance.total})</p>
+            <div className="balance-main">
+              <span className="star-icon">⭐</span>
+              <span className="balance-value">{balance.unconsolidated}</span>
+              <span className="balance-label">Available Stars</span>
+            </div>
+            <p className="balance-note">
+              Total stars earned: {balance.total} |
+              Already redeemed: {balance.total - balance.unconsolidated}
+            </p>
           </div>
         </section>
 
-        <section className="reset-form-section">
-          <h2>Consolidation:</h2>
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>How many stars to consolidate?</label>
-              <input
-                type="number"
-                min="1"
-                max={balance.unconsolidated}
-                value={starsToReset}
-                onChange={(e) => setStarsToReset(e.target.value)}
-                placeholder={`Max: ${balance.unconsolidated}`}
-                required
-              />
-            </div>
+        <section className="reset-action-section">
+          <h2>Reset Stars</h2>
+          <p className="reset-info">
+            Resetting stars will archive the current balance and mark all {balance.unconsolidated} stars
+            as redeemed. This is useful when you've given the child a real-world reward.
+          </p>
 
-            <div className="form-group">
-              <label>What real-world reward did you give?</label>
-              <input
-                type="text"
-                value={rewardDescription}
-                onChange={(e) => setRewardDescription(e.target.value)}
-                placeholder="e.g., Ice cream trip to Dairy Queen"
-                maxLength={500}
-                required
-              />
-            </div>
+          <button
+            className="reset-button"
+            onClick={handleReset}
+            disabled={resetting || balance.unconsolidated === 0}
+          >
+            {resetting ? 'Resetting...' : `Reset ${balance.unconsolidated} Stars`}
+          </button>
 
-            <div className="form-actions">
-              <button type="button" onClick={() => navigate('/admin')}>
-                Cancel
-              </button>
-              <button type="submit" disabled={submitting}>
-                {submitting ? 'Confirming...' : 'Confirm Reset'}
-              </button>
-            </div>
-          </form>
+          {balance.unconsolidated === 0 && (
+            <p className="no-stars-message">No stars available to reset.</p>
+          )}
         </section>
 
         <section className="history-section">
-          <h2>Previous Consolidations:</h2>
+          <h2>Reset History</h2>
           {history.length === 0 ? (
-            <p className="no-history">No previous consolidations</p>
+            <p className="no-history">No previous resets</p>
           ) : (
-            <ul className="history-list">
+            <div className="history-table">
+              <div className="history-header">
+                <span>Date</span>
+                <span>Stars</span>
+                <span>Note</span>
+              </div>
               {history.map((item, i) => (
-                <li key={i}>
-                  • {item.date}: {item.stars} stars → "{item.reward}"
-                </li>
+                <div key={i} className="history-row">
+                  <span>{item.date}</span>
+                  <span>{item.stars} ⭐</span>
+                  <span>{item.reward}</span>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </section>
       </div>

@@ -157,3 +157,42 @@ type AnswerValidationResult struct {
 	CorrectAnswer   string `json:"correct_answer"`
 	FeedbackMessage string `json:"feedback_message"`
 }
+
+// PlayerNumberRange stores custom min/max number ranges per player per game
+type PlayerNumberRange struct {
+	ID          string    `json:"id" db:"id"`
+	PlayerID    string    `json:"player_id" db:"player_id"`
+	GameID      string    `json:"game_id" db:"game_id"`
+	MinNumber   int       `json:"min_number" db:"min_number"`
+	MaxNumber   int       `json:"max_number" db:"max_number"`
+	Operand1Min *int      `json:"operand1_min,omitempty" db:"operand1_min"`
+	Operand1Max *int      `json:"operand1_max,omitempty" db:"operand1_max"`
+	Operand2Min *int      `json:"operand2_min,omitempty" db:"operand2_min"`
+	Operand2Max *int      `json:"operand2_max,omitempty" db:"operand2_max"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// PlayerNumberRangesRequest is used for updating number ranges for a player
+type PlayerNumberRangesRequest struct {
+	// Map of game_id -> NumberRangeConfig
+	NumberRanges map[string]NumberRangeConfig `json:"number_ranges"`
+}
+
+// NumberRangeConfig represents min/max for a single game with optional operand-specific ranges
+type NumberRangeConfig struct {
+	MinNumber   int  `json:"min_number"`
+	MaxNumber   int  `json:"max_number"`
+	Operand1Min *int `json:"operand1_min,omitempty"`
+	Operand1Max *int `json:"operand1_max,omitempty"`
+	Operand2Min *int `json:"operand2_min,omitempty"`
+	Operand2Max *int `json:"operand2_max,omitempty"`
+}
+
+// OperandRanges provides a convenient structure for game engines to get ranges
+type OperandRanges struct {
+	Operand1Min int
+	Operand1Max int
+	Operand2Min int
+	Operand2Max int
+}

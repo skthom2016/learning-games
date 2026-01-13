@@ -58,6 +58,10 @@ export const api = {
     return apiClient.get(`/api/players/${playerId}`);
   },
 
+  deletePlayer: (playerId) => {
+    return apiClient.delete(`/api/players/${playerId}`);
+  },
+
   // Session Management
   startSession: (playerId, gameId) => {
     // TODO: POST /api/sessions/start
@@ -133,6 +137,21 @@ export const api = {
   getPlayerAnalytics: (playerId) => {
     // TODO: GET /api/admin/analytics/:player_id
     return apiClient.get(`/api/admin/analytics/${playerId}`);
+  },
+
+  // Player Number Ranges (Admin: grade-based difficulty customization)
+  getPlayerNumberRanges: (playerId) => {
+    return apiClient.get(`/api/players/${playerId}/number-ranges`);
+  },
+
+  setPlayerNumberRanges: (playerId, numberRanges) => {
+    return apiClient.put(`/api/players/${playerId}/number-ranges`, {
+      number_ranges: numberRanges,
+    });
+  },
+
+  deletePlayerNumberRange: (playerId, gameId) => {
+    return apiClient.delete(`/api/players/${playerId}/number-ranges/${gameId}`);
   },
 };
 

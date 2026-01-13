@@ -42,10 +42,10 @@ func ListPlayers(c *gin.Context) {
 	c.JSON(http.StatusOK, players)
 }
 
-// GetPlayer handles GET /api/players/:id
+// GetPlayer handles GET /api/players/:player_id
 // TODO: Implement getting single player by ID
 func GetPlayer(c *gin.Context) {
-	playerID := c.Param("id")
+	playerID := c.Param("player_id")
 
 	// TODO: Call platform service to get player by ID
 	player, err := platform.GetPlayerByID(playerID)
@@ -55,4 +55,17 @@ func GetPlayer(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, player)
+}
+
+// DeletePlayer handles DELETE /api/players/:player_id
+func DeletePlayer(c *gin.Context) {
+	playerID := c.Param("player_id")
+
+	err := platform.DeletePlayer(playerID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Player deleted successfully"})
 }

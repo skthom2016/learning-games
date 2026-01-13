@@ -9,13 +9,26 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/learning-game/backend/internal/models"
+	"github.com/learning-game/backend/internal/services/numberranges"
 )
 
 // DivisionGame implements the division facts game
 type DivisionGame struct{}
 
 // GenerateQuestion generates a division question
-func (g *DivisionGame) GenerateQuestion(topicID, difficultyLevelID string, seed int64) (*models.Question, error) {
+func (g *DivisionGame) GenerateQuestion(playerID, topicID, difficultyLevelID string, seed int64) (*models.Question, error) {
+	rng := rand.New(rand.NewSource(seed))
+
+	// Check if player has custom operand-specific ranges
+	operandRanges, hasCustom, err := numberranges.GetOperandRangesForQuestionGeneration(playerID, "division-facts")
+	if err != nil {
+		hasCustom = false
+	}
+
+	// If custom range is set, use simplified logic based on the range
+	if hasCustom && operandRanges != nil {
+		return g.generateCustomRangeQuestion(rng, topicID, difficultyLevelID, operandRanges)
+	}
 	// Parse topic to get divisor (e.g., "divide-7" -> 7)
 	parts := strings.Split(topicID, "-")
 	if len(parts) != 2 {
@@ -27,7 +40,7 @@ func (g *DivisionGame) GenerateQuestion(topicID, difficultyLevelID string, seed 
 		return nil, fmt.Errorf("invalid topic ID: %s", topicID)
 	}
 
-	rng := rand.New(rand.NewSource(seed))
+	// Use existing rng from custom range check
 
 	// Generate quotient based on difficulty
 	var quotient int
@@ -169,6 +182,72 @@ func (g *DivisionGame) getFeedbackMessage(isCorrect bool) string {
 	}
 	messages := []string{"Not quite, but close!", "Let's try another one!", "Good try!", "Almost there!"}
 	return messages[rand.Intn(len(messages))]
+}
+
+// generateCustomRangeQuestion generates a question within custom operand ranges
+// For division: operand1 = dividend range, operand2 = divisor range
+func (g *DivisionGame) generateCustomRangeQuestion(rng *rand.Rand, topicID, difficultyLevelID string, ranges *models.OperandRanges) (*models.Question, error) {
+	// Ensure we have valid ranges
+	dividendMin, dividendMax := ranges.Operand1Min, ranges.Operand1Max
+	divisorMin, divisorMax := ranges.Operand2Min, ranges.Operand2Max
+
+	if dividendMax <= dividendMin {
+		dividendMax = dividendMin + 1
+	}
+	if divisorMax <= divisorMin {
+		divisorMax = divisorMin + 1
+	}
+
+	// Ensure divisor is at least 1
+	if divisorMin < 1 {
+		divisorMin = 1
+	}
+
+	// Generate divisor within range
+	divisor := rng.Intn(divisorMax-divisorMin+1) + divisorMin
+	if divisor == 0 {
+		divisor = 1
+	}
+
+	// Generate quotient such that dividend is within range
+	maxQuotient := dividendMax / divisor
+	if maxQuotient < 1 {
+		maxQuotient = 1
+	}
+	quotient := rng.Intn(maxQuotient) + 1
+
+	dividend := quotient * divisor
+
+	// Ensure dividend is within range
+	if dividend < dividendMin {
+		quotient = (dividendMin / divisor) + 1
+		dividend = quotient * divisor
+	}
+
+	correctAnswer := quotient
+	hintText := g.generateVerbalHint(dividend, divisor)
+
+	return &models.Question{
+		QuestionID:        uuid.New().String(),
+		TopicID:           topicID,
+		DifficultyLevelID: difficultyLevelID,
+		QuestionText:      fmt.Sprintf("What is %d ÷ %d?", dividend, divisor),
+		QuestionData: map[string]interface{}{
+			"dividend": dividend,
+			"divisor":  divisor,
+			"quotient": quotient,
+		},
+		VisualHintData: map[string]interface{}{
+			"hint_type": "grouping",
+			"groups":    quotient,
+			"per_group": divisor,
+			"total":     dividend,
+			"color":     "green",
+		},
+		VerbalHint:    hintText,
+		CorrectAnswer: fmt.Sprintf("%d", correctAnswer),
+		GeneratedAt:   time.Now(),
+	}, nil
 }
 
 // GetGameDefinition returns the game metadata

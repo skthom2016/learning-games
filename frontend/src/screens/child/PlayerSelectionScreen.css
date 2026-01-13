@@ -77,3 +77,31 @@
 }
 
 /* TODO: Add more child-friendly styles */
+
+/* Subtle admin link for parents */
+.admin-link {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.admin-link:hover {
+  opacity: 1;
+}
+
+.admin-link button {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  border: none;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  text-decoration: none;
+}
+
+.admin-link button:hover {
+  color: white;
+  text-decoration: underline;
+}

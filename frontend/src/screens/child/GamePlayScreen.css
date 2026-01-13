@@ -41,6 +41,76 @@
   margin-bottom: 3rem;
 }
 
+/* Vertical question layout */
+.vertical-question {
+  font-size: 4rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  display: inline-block;
+  text-align: right;
+}
+
+.vertical-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 4.5rem;
+}
+
+.top-number {
+  padding-right: 0.5rem;
+}
+
+.bottom-number {
+  padding-left: 0.5rem;
+}
+
+.operator {
+  padding-right: 0.5rem;
+}
+
+.horizontal-line {
+  border-top: 4px solid white;
+  margin-top: 0.5rem;
+  min-width: 100%;
+}
+
+/* Division specific layout */
+.division-layout {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.long-division {
+  font-size: 4rem;
+  font-weight: bold;
+  position: relative;
+  display: inline-block;
+  padding-left: 4.5rem;
+}
+
+.divisor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  text-align: right;
+  width: 4rem;
+}
+
+.division-bracket {
+  position: relative;
+  padding-left: 1rem;
+}
+
+/* Draw the long division bracket */
+.division-bracket::before {
+  content: ')';
+  position: absolute;
+  left: -0.5rem;
+  font-size: 4rem;
+  font-weight: bold;
+}
+
 .answer-section {
   margin-bottom: 2rem;
 }
@@ -70,10 +140,12 @@
   color: white;
   border: none;
   border-radius: 10px;
-  padding: 1.5rem 3rem;
-  font-size: 1.5rem;
+  padding: 0.6rem 2.5rem;
+  font-size: 1.3rem;
   cursor: pointer;
   transition: transform 0.2s;
+  height: fit-content;
+  line-height: 1;
 }
 
 .submit-button:hover:not(:disabled) {

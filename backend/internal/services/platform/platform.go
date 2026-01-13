@@ -1,6 +1,7 @@
 package platform
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -163,4 +164,76 @@ func EndGameSession(playerID, gameID, sessionID string) (map[string]interface{},
 	}
 
 	return summary, nil
+}
+
+// DeletePlayer deletes a player and all associated data
+func DeletePlayer(playerID string) error {
+	db := database.GetDB()
+
+	// Start transaction to ensure all related data is deleted atomically
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Delete in correct order to respect foreign key constraints
+	// 1. Delete reward reset events (references player_id)
+	_, err = tx.Exec(`DELETE FROM reward_reset_events WHERE player_id = $1`, playerID)
+	if err != nil {
+		return fmt.Errorf("failed to delete reward reset events: %w", err)
+	}
+
+	// 2. Delete reward transactions (references player_id)
+	_, err = tx.Exec(`DELETE FROM reward_transactions WHERE player_id = $1`, playerID)
+	if err != nil {
+		return fmt.Errorf("failed to delete reward transactions: %w", err)
+	}
+
+	// 3. Delete attempt records (references player_id)
+	_, err = tx.Exec(`DELETE FROM attempt_records WHERE player_id = $1`, playerID)
+	if err != nil {
+		return fmt.Errorf("failed to delete attempt records: %w", err)
+	}
+
+	// 4. Delete mastery records (references player_id)
+	_, err = tx.Exec(`DELETE FROM mastery_records WHERE player_id = $1`, playerID)
+	if err != nil {
+		return fmt.Errorf("failed to delete mastery records: %w", err)
+	}
+
+	// 5. Delete player game profiles (references player_id)
+	_, err = tx.Exec(`DELETE FROM player_game_profiles WHERE player_id = $1`, playerID)
+	if err != nil {
+		return fmt.Errorf("failed to delete player game profiles: %w", err)
+	}
+
+	// 6. Delete player number ranges (references player_id)
+	// Use a subquery to check if table exists first
+	var tableExists bool
+	err = tx.QueryRow(`SELECT EXISTS (
+		SELECT FROM information_schema.tables
+		WHERE table_schema = 'public'
+		AND table_name = 'player_number_ranges'
+	)`).Scan(&tableExists)
+	if err == nil && tableExists {
+		_, err = tx.Exec(`DELETE FROM player_number_ranges WHERE player_id = $1`, playerID)
+		if err != nil {
+			return fmt.Errorf("failed to delete player number ranges: %w", err)
+		}
+	}
+
+	// 7. Finally delete the player
+	_, err = tx.Exec(`DELETE FROM players WHERE player_id = $1`, playerID)
+	if err != nil {
+		return fmt.Errorf("failed to delete player: %w", err)
+	}
+
+	// Commit transaction
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

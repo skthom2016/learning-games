@@ -31,7 +31,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer db.Close()
+	// Note: Don't close the connection here - it needs to stay open for the application lifetime
+	// defer db.Close()  // REMOVED: Was closing connection immediately after server start
 
 	// Test database connection
 	if err := db.Ping(); err != nil {

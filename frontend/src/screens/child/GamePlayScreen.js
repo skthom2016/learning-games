@@ -165,6 +165,66 @@ function GamePlayScreen() {
     }
   };
 
+  const renderVerticalQuestion = () => {
+    const { question_data } = question;
+
+    if (gameId === 'subtraction-facts') {
+      // Subtraction: minuend - subtrahend = difference
+      const minuend = question_data?.minuend || 0;
+      const subtrahend = question_data?.subtrahend || 0;
+      return (
+        <div className="vertical-question">
+          <div className="vertical-row top-number">{minuend}</div>
+          <div className="vertical-row">
+            <span className="operator">−</span>
+            <span className="bottom-number">{subtrahend}</span>
+          </div>
+          <div className="horizontal-line"></div>
+        </div>
+      );
+    } else if (gameId === 'addition-facts') {
+      // Addition: addend1 + addend2 = sum
+      const addend1 = question_data?.addend1 || 0;
+      const addend2 = question_data?.addend2 || 0;
+      return (
+        <div className="vertical-question">
+          <div className="vertical-row top-number">{addend1}</div>
+          <div className="vertical-row">
+            <span className="operator">+</span>
+            <span className="bottom-number">{addend2}</span>
+          </div>
+          <div className="horizontal-line"></div>
+        </div>
+      );
+    } else if (gameId === 'division-facts') {
+      // Division: dividend ÷ divisor = quotient
+      const dividend = question_data?.dividend || 0;
+      const divisor = question_data?.divisor || 0;
+      return (
+        <div className="vertical-question division-layout">
+          <div className="long-division">
+            <span className="divisor">{divisor}</span>
+            <span className="division-bracket">{dividend}</span>
+          </div>
+        </div>
+      );
+    } else {
+      // Multiplication: operand1 × operand2 = product
+      const operand1 = question_data?.operand1 || 0;
+      const operand2 = question_data?.operand2 || 0;
+      return (
+        <div className="vertical-question">
+          <div className="vertical-row top-number">{operand1}</div>
+          <div className="vertical-row">
+            <span className="operator">×</span>
+            <span className="bottom-number">{operand2}</span>
+          </div>
+          <div className="horizontal-line"></div>
+        </div>
+      );
+    }
+  };
+
   const renderVisualHint = () => {
     if (!question?.visual_hint_data) return null;
 
@@ -208,7 +268,7 @@ function GamePlayScreen() {
       </div>
 
       <div className="question-area">
-        <h1 className="question-text">{question.question_text}</h1>
+        {renderVerticalQuestion()}
 
         <div className="answer-section">
           <input
@@ -216,6 +276,11 @@ function GamePlayScreen() {
             className="answer-input"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && answer.trim()) {
+                handleSubmit();
+              }
+            }}
             placeholder="Your answer"
             autoFocus
           />

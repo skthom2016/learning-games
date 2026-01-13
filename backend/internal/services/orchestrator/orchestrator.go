@@ -15,7 +15,7 @@ import (
 
 // GameEngine interface for all game implementations
 type GameEngine interface {
-	GenerateQuestion(topicID, difficultyLevelID string, seed int64) (*models.Question, error)
+	GenerateQuestion(playerID, topicID, difficultyLevelID string, seed int64) (*models.Question, error)
 	ValidateAnswer(correctAnswer, submittedAnswer string) (*models.AnswerValidationResult, error)
 	GetGameDefinition() *models.Game
 }
@@ -121,7 +121,7 @@ func (o *GameOrchestrator) GetNextQuestion(playerID, gameID string) (*models.Que
 
 	// Generate question using game engine
 	seed := time.Now().UnixNano()
-	question, err := gameEngine.GenerateQuestion(selectedTopicID, difficultyLevelID, seed)
+	question, err := gameEngine.GenerateQuestion(playerID, selectedTopicID, difficultyLevelID, seed)
 	if err != nil {
 		return nil, err
 	}

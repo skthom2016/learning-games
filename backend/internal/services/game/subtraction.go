@@ -7,14 +7,26 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/learning-game/backend/internal/models"
+	"github.com/learning-game/backend/internal/services/numberranges"
 )
 
 // SubtractionGame implements the subtraction facts game
 type SubtractionGame struct{}
 
 // GenerateQuestion generates a subtraction question
-func (g *SubtractionGame) GenerateQuestion(topicID, difficultyLevelID string, seed int64) (*models.Question, error) {
+func (g *SubtractionGame) GenerateQuestion(playerID, topicID, difficultyLevelID string, seed int64) (*models.Question, error) {
 	rng := rand.New(rand.NewSource(seed))
+
+	// Check if player has custom operand-specific ranges
+	operandRanges, hasCustom, err := numberranges.GetOperandRangesForQuestionGeneration(playerID, "subtraction-facts")
+	if err != nil {
+		hasCustom = false
+	}
+
+	// If custom range is set, use simplified logic based on the range
+	if hasCustom && operandRanges != nil {
+		return g.generateCustomRangeQuestion(rng, topicID, difficultyLevelID, operandRanges)
+	}
 
 	// Topic IDs now represent skill levels
 	// Format: "subtract-level-N" where N is the level
@@ -173,6 +185,67 @@ func (g *SubtractionGame) getFeedbackMessage(isCorrect bool) string {
 	}
 	messages := []string{"Not quite, but close!", "Let's try another one!", "Good try!", "Almost there!"}
 	return messages[rand.Intn(len(messages))]
+}
+
+// generateCustomRangeQuestion generates a question within custom operand ranges
+// For subtraction: operand1 = minuend range, operand2 = subtrahend range
+func (g *SubtractionGame) generateCustomRangeQuestion(rng *rand.Rand, topicID, difficultyLevelID string, ranges *models.OperandRanges) (*models.Question, error) {
+	// Ensure we have valid ranges
+	minuendMin, minuendMax := ranges.Operand1Min, ranges.Operand1Max
+	subtrahendMin, subtrahendMax := ranges.Operand2Min, ranges.Operand2Max
+
+	if minuendMax <= minuendMin {
+		minuendMax = minuendMin + 1
+	}
+	if subtrahendMax <= subtrahendMin {
+		subtrahendMax = subtrahendMin + 1
+	}
+
+	// Generate minuend within range
+	minuend := rng.Intn(minuendMax-minuendMin+1) + minuendMin
+
+	// Generate subtrahend within range, but ensure it's <= minuend for positive results
+	maxSubtrahend := subtrahendMax
+	if maxSubtrahend > minuend {
+		maxSubtrahend = minuend
+	}
+	if maxSubtrahend < subtrahendMin {
+		// If minuend is smaller than subtrahend min, swap to ensure positive result
+		minuend, maxSubtrahend = minuendMax, minuend
+	}
+
+	subtrahend := rng.Intn(maxSubtrahend-subtrahendMin+1) + subtrahendMin
+	if subtrahend > minuend {
+		subtrahend = minuend
+	}
+
+	difference := minuend - subtrahend
+	level := 1 // Default level for custom ranges
+	hintText := fmt.Sprintf("Think: Start at %d and count back %d times.", minuend, subtrahend)
+
+	return &models.Question{
+		QuestionID:        uuid.New().String(),
+		TopicID:           topicID,
+		DifficultyLevelID: difficultyLevelID,
+		QuestionText:      fmt.Sprintf("What is %d − %d?", minuend, subtrahend),
+		QuestionData: map[string]interface{}{
+			"minuend":    minuend,
+			"subtrahend": subtrahend,
+			"difference": difference,
+			"level":      level,
+		},
+		VisualHintData: map[string]interface{}{
+			"hint_type":  "take-away",
+			"minuend":    minuend,
+			"subtrahend": subtrahend,
+			"difference": difference,
+			"color":      "orange",
+			"level":      level,
+		},
+		VerbalHint:    hintText,
+		CorrectAnswer: fmt.Sprintf("%d", difference),
+		GeneratedAt:   time.Now(),
+	}, nil
 }
 
 // GetGameDefinition returns the game metadata

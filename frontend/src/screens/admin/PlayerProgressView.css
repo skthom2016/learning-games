@@ -3,6 +3,44 @@
   background: #f5f5f5;
 }
 
+.admin-header {
+  background: white;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.admin-header h1 {
+  margin: 0;
+  color: #333;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.header-buttons button {
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.header-buttons .secondary-button {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.header-buttons button:hover {
+  transform: scale(1.02);
+}
+
 .progress-content {
   padding: 2rem;
   max-width: 1200px;
@@ -94,4 +132,106 @@
   margin: 0.5rem 0;
   font-size: 1rem;
   line-height: 1.6;
+}
+
+/* Game Selector Tabs */
+.game-selector-section,
+.game-stats-section,
+.history-section {
+  background: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.game-selector-section h2,
+.game-stats-section h2,
+.history-section h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.game-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.game-tab {
+  background: #f0f0f0;
+  color: #333;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.game-tab:hover {
+  background: #e0e0e0;
+}
+
+.game-tab.active {
+  background: #667eea;
+  color: white;
+  border-color: #5a67d8;
+}
+
+.game-tab-stats {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* History Section */
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.history-list li {
+  padding: 0.75rem;
+  background: #f9f9f9;
+  border-radius: 5px;
+  margin-bottom: 0.5rem;
+}
+
+/* Error and Loading States */
+.error-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: #f5f5f5;
+}
+
+.error-screen p {
+  color: #666;
+  font-size: 1.2rem;
+}
+
+.error-screen button {
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.no-data {
+  color: #666;
+  font-style: italic;
+  padding: 1rem;
+  text-align: center;
 }

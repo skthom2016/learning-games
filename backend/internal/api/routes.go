@@ -17,7 +17,13 @@ func SetupRoutes(router *gin.Engine) {
 		// TODO: Implement player CRUD operations
 		v1.POST("/players", handlers.CreatePlayer)
 		v1.GET("/players", handlers.ListPlayers)
-		v1.GET("/players/:id", handlers.GetPlayer)
+		v1.GET("/players/:player_id", handlers.GetPlayer)
+		v1.DELETE("/players/:player_id", handlers.DeletePlayer)
+
+		// Player Number Ranges (Admin: grade-based difficulty customization)
+		v1.GET("/players/:player_id/number-ranges", handlers.GetPlayerNumberRanges)
+		v1.PUT("/players/:player_id/number-ranges", handlers.SetPlayerNumberRanges)
+		v1.DELETE("/players/:player_id/number-ranges/:game_id", handlers.DeletePlayerNumberRange)
 
 		// Session Management
 		// TODO: Implement session start/end logic
