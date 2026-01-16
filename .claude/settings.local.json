@@ -45,7 +45,8 @@
       "Bash(docker login:*)",
       "Bash(docker-compose stop:*)",
       "Bash(docker-compose build:*)",
-      "Bash(docker-compose:*)"
+      "Bash(docker-compose:*)",
+      "Bash(docker info:*)"
     ]
   }
 }
