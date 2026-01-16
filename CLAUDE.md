@@ -89,15 +89,26 @@ curl -X POST http://localhost:8080/api/players -H "Content-Type: application/jso
 # Connect to PostgreSQL container
 docker exec -it learning-game-db psql -U gameuser -d learning_game
 
-# Run specific migration
-docker exec -i learning-game-db psql -U gameuser -d learning_game < backend/migrations/008_add_player_number_ranges.sql
+# View applied migrations
+docker exec -it learning-game-db psql -U gameuser -d learning_game -c "SELECT * FROM schema_migrations ORDER BY id;"
 
 # Backup database
 docker exec learning-game-db pg_dump -U gameuser learning_game > backup.sql
 
 # Restore database
 docker exec -i learning-game-db psql -U gameuser learning_game < backup.sql
+
+# Manual migration (usually not needed - migrations run automatically)
+docker exec -i learning-game-db psql -U gameuser -d learning_game < backend/migrations/014_add_player_star_rewards.sql
 ```
+
+**Automatic Migrations:**
+- Migrations now run automatically on backend startup
+- Tracked in `schema_migrations` table
+- Only pending migrations are applied (never re-runs old migrations)
+- Safe for existing databases with data
+- Each migration runs in a transaction (rolls back on error)
+- See `MIGRATION_GUIDE.md` for detailed documentation
 
 ## Architecture Overview
 
@@ -176,10 +187,13 @@ games (1) ──┬── (N) topics
 ```
 
 **Migration Strategy:**
-- Migrations in `backend/migrations/` numbered sequentially
-- Run automatically on first Docker startup (via `docker-entrypoint-initdb.d`)
+- Migrations in `backend/migrations/` numbered sequentially (001, 002, 003, ...)
+- Run automatically on EVERY backend startup (via `backend/internal/database/migrations.go`)
+- Tracked in `schema_migrations` table (only pending migrations are applied)
+- Each migration runs in a transaction (atomic, rolls back on error)
 - Use PostgreSQL ENUMs for type safety (mastery_state, reward_type)
 - Indexes on hot query paths (attempts by player+game+topic+time, rewards by player+time)
+- Safe for existing databases with data (never re-runs applied migrations)
 
 ### Frontend Architecture (React)
 
@@ -421,8 +435,14 @@ curl http://localhost:8080/health
 
 **Database migration issues:**
 ```bash
-# Migrations run ONLY on first startup (when volume is empty)
-# To re-run migrations:
+# Migrations run automatically on EVERY backend startup
+# Check migration logs:
+docker-compose logs backend | grep migration
+
+# View which migrations have been applied:
+docker exec -it learning-game-db psql -U gameuser -d learning_game -c "SELECT * FROM schema_migrations;"
+
+# To re-run ALL migrations (WARNING: deletes all data):
 docker-compose down -v  # Delete volume
 docker-compose up --build
 ```
@@ -442,8 +462,11 @@ docker-compose up --build
 ### Migration Best Practices
 - Always number sequentially (`001_`, `002_`, ...)
 - Include rollback comments for reversibility
-- Test with `docker-compose down -v && docker-compose up --build`
+- Migrations run automatically on backend startup (tracked in `schema_migrations` table)
+- Test with fresh database: `docker-compose down -v && docker-compose up --build`
+- Test with existing database: `docker-compose restart backend` (only new migrations run)
 - Backup before production migrations: `pg_dump -U gameuser learning_game > backup.sql`
+- See `MIGRATION_GUIDE.md` for deployment instructions
 
 ### Foreign Key Cascading
 - `ON DELETE CASCADE` used for child records (attempts, rewards, mastery)

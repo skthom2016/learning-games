@@ -43,6 +43,12 @@ func main() {
 	// Initialize database layer
 	database.InitDB(db)
 
+	// Run database migrations
+	migrationsPath := getEnv("MIGRATIONS_PATH", "./migrations")
+	if err := database.RunMigrations(db, migrationsPath); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+
 	// Setup Gin router
 	router := gin.Default()
 

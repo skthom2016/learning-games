@@ -341,3 +341,93 @@ input:checked + .slider:before {
   font-size: 1.5rem;
   color: white;
 }
+
+/* Star Allocation Section */
+.star-allocation-section {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #fff9e6;
+  border-radius: 8px;
+  border: 2px solid #ffb300;
+}
+
+.star-allocation-section h4 {
+  margin: 0 0 1rem 0;
+  font-size: 0.95rem;
+  color: #ff8f00;
+  font-weight: 600;
+  text-align: center;
+}
+
+.star-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.star-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #ffe0b2;
+}
+
+.star-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.difficulty-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.difficulty-badge.easy {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.difficulty-badge.medium {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.difficulty-badge.hard {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.star-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.star-input-group input {
+  width: 70px;
+  padding: 0.5rem;
+  border: 2px solid #ffb300;
+  border-radius: 5px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.star-input-group input:focus {
+  outline: none;
+  border-color: #ff8f00;
+  box-shadow: 0 0 0 3px rgba(255, 179, 0, 0.1);
+}
+
+.star-icon {
+  font-size: 1.3rem;
+}

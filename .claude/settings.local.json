@@ -42,7 +42,10 @@
       "Bash(git push:*)",
       "Bash(docker build:*)",
       "Bash(docker push:*)",
-      "Bash(docker login:*)"
+      "Bash(docker login:*)",
+      "Bash(docker-compose stop:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(docker-compose:*)"
     ]
   }
 }

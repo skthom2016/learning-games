@@ -153,6 +153,21 @@ export const api = {
   deletePlayerNumberRange: (playerId, gameId) => {
     return apiClient.delete(`/api/players/${playerId}/number-ranges/${gameId}`);
   },
+
+  // Player Star Rewards (Admin: custom stars per difficulty level)
+  getPlayerStarRewards: (playerId) => {
+    return apiClient.get(`/api/players/${playerId}/star-rewards`);
+  },
+
+  setPlayerStarRewards: (playerId, starRewards) => {
+    return apiClient.put(`/api/players/${playerId}/star-rewards`, {
+      star_rewards: starRewards,
+    });
+  },
+
+  deletePlayerStarReward: (playerId, gameId) => {
+    return apiClient.delete(`/api/players/${playerId}/star-rewards/${gameId}`);
+  },
 };
 
 export default apiClient;

@@ -196,3 +196,40 @@ type OperandRanges struct {
 	Operand2Min int
 	Operand2Max int
 }
+
+// TopicDifficultyProgress tracks difficulty progression per topic per player
+type TopicDifficultyProgress struct {
+	ID                       string    `json:"id" db:"id"`
+	PlayerID                 string    `json:"player_id" db:"player_id"`
+	GameID                   string    `json:"game_id" db:"game_id"`
+	TopicID                  string    `json:"topic_id" db:"topic_id"`
+	CurrentDifficultyLevelID string    `json:"current_difficulty_level_id" db:"current_difficulty_level_id"`
+	ConsecutiveCorrect       int       `json:"consecutive_correct" db:"consecutive_correct"`
+	ConsecutiveWrong         int       `json:"consecutive_wrong" db:"consecutive_wrong"`
+	UpdatedAt                time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// PlayerStarReward stores custom star rewards per difficulty level per player per game
+type PlayerStarReward struct {
+	ID          string    `json:"id" db:"id"`
+	PlayerID    string    `json:"player_id" db:"player_id"`
+	GameID      string    `json:"game_id" db:"game_id"`
+	EasyStars   int       `json:"easy_stars" db:"easy_stars"`
+	MediumStars int       `json:"medium_stars" db:"medium_stars"`
+	HardStars   int       `json:"hard_stars" db:"hard_stars"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// PlayerStarRewardsRequest is used for updating star rewards for a player
+type PlayerStarRewardsRequest struct {
+	// Map of game_id -> StarRewardConfig
+	StarRewards map[string]StarRewardConfig `json:"star_rewards"`
+}
+
+// StarRewardConfig represents star rewards for a single game
+type StarRewardConfig struct {
+	EasyStars   int `json:"easy_stars"`
+	MediumStars int `json:"medium_stars"`
+	HardStars   int `json:"hard_stars"`
+}

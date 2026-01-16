@@ -17,6 +17,7 @@ import AdminLoginScreen from './screens/admin/AdminLoginScreen';
 import PlayerProgressView from './screens/admin/PlayerProgressView';
 import RewardResetScreen from './screens/admin/RewardResetScreen';
 import NumberRangeSettingsScreen from './screens/admin/NumberRangeSettingsScreen';
+import StarRewardSettingsScreen from './screens/admin/StarRewardSettingsScreen';
 
 function App() {
   return (
@@ -64,6 +65,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <NumberRangeSettingsScreen />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/star-rewards/:playerId"
+              element={
+                <ProtectedRoute>
+                  <StarRewardSettingsScreen />
                 </ProtectedRoute>
               }
             />

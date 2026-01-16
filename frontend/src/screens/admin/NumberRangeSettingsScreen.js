@@ -12,6 +12,7 @@ function NumberRangeSettingsScreen() {
   const { playerId } = useParams();
   const [player, setPlayer] = useState(null);
   const [ranges, setRanges] = useState({});
+  const [starRewards, setStarRewards] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -53,9 +54,10 @@ function NumberRangeSettingsScreen() {
 
   const loadData = async () => {
     try {
-      const [playerResponse, rangesResponse] = await Promise.all([
+      const [playerResponse, rangesResponse, starRewardsResponse] = await Promise.all([
         api.getPlayer(playerId),
         api.getPlayerNumberRanges(playerId),
+        api.getPlayerStarRewards(playerId),
       ]);
 
       setPlayer(playerResponse.data);
@@ -77,6 +79,20 @@ function NumberRangeSettingsScreen() {
         });
       }
       setRanges(rangesMap);
+
+      // Convert star rewards to map
+      const starRewardsMap = {};
+      if (starRewardsResponse.data.star_rewards) {
+        Object.entries(starRewardsResponse.data.star_rewards).forEach(([gameId, config]) => {
+          starRewardsMap[gameId] = {
+            easy: config.easy_stars,
+            medium: config.medium_stars,
+            hard: config.hard_stars,
+          };
+        });
+      }
+      setStarRewards(starRewardsMap);
+
       setLoading(false);
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -131,6 +147,17 @@ function NumberRangeSettingsScreen() {
     });
   };
 
+  const handleStarChange = (gameId, difficulty, value) => {
+    const intValue = value === '' ? 1 : Math.max(1, parseInt(value, 10) || 1);
+    setStarRewards((prev) => ({
+      ...prev,
+      [gameId]: {
+        ...prev[gameId],
+        [difficulty]: intValue,
+      },
+    }));
+  };
+
   const handleSave = async () => {
     // Validate ranges
     for (const [gameId, range] of Object.entries(ranges)) {
@@ -153,12 +180,14 @@ function NumberRangeSettingsScreen() {
       }
     }
 
-    if (!window.confirm('Save these number range settings? This will affect the questions generated for this player.')) {
+    if (!window.confirm('Save these settings? This will affect the questions and star rewards for this player.')) {
       return;
     }
 
     try {
       setSaving(true);
+
+      // Save number ranges
       const numberRanges = {};
       for (const [gameId, range] of Object.entries(ranges)) {
         numberRanges[gameId] = {
@@ -175,11 +204,26 @@ function NumberRangeSettingsScreen() {
         }
       }
 
-      await api.setPlayerNumberRanges(playerId, numberRanges);
-      alert('Number range settings saved successfully!');
+      // Save star rewards
+      const starRewardsPayload = {};
+      for (const [gameId, config] of Object.entries(starRewards)) {
+        starRewardsPayload[gameId] = {
+          easy_stars: config.easy,
+          medium_stars: config.medium,
+          hard_stars: config.hard,
+        };
+      }
+
+      // Save both in parallel
+      await Promise.all([
+        Object.keys(numberRanges).length > 0 ? api.setPlayerNumberRanges(playerId, numberRanges) : Promise.resolve(),
+        Object.keys(starRewardsPayload).length > 0 ? api.setPlayerStarRewards(playerId, starRewardsPayload) : Promise.resolve(),
+      ]);
+
+      alert('Settings saved successfully!');
     } catch (error) {
-      console.error('Failed to save ranges:', error);
-      alert('Failed to save number range settings');
+      console.error('Failed to save settings:', error);
+      alert('Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -213,16 +257,17 @@ function NumberRangeSettingsScreen() {
   return (
     <div className="number-range-settings-screen">
       <header className="admin-header">
-        <h1>Number Range Settings for {player.player_name}</h1>
+        <h1>Number Range & Star Reward Settings for {player.player_name}</h1>
         <button onClick={() => navigate(`/admin/player/${playerId}`)}>← Back to Player</button>
       </header>
 
       <div className="settings-content">
         <section className="info-section">
           <p>
-            Set custom number ranges for each game to customize difficulty based on grade level.
-            You can set a simple range for all numbers, or use advanced settings to set
-            different ranges for each operand.
+            Set custom number ranges and star rewards for each game to customize difficulty and motivation
+            based on the player's age and ability. You can set a simple range for all numbers, or use
+            advanced settings to set different ranges for each operand. Star rewards are given for each
+            correct answer and vary by difficulty level (Easy/Medium/Hard).
           </p>
           <div className="grade-examples">
             <strong>Grade Examples:</strong>
@@ -364,10 +409,59 @@ function NumberRangeSettingsScreen() {
                           <>Numbers: {range.min} to {range.max}</>
                         )}
                       </div>
+
+                      {/* Star Allocation Section */}
+                      <div className="star-allocation-section">
+                        <h4>Star Rewards per Correct Answer</h4>
+                        <div className="star-inputs">
+                          <div className="star-row">
+                            <label>
+                              <span className="difficulty-badge easy">Easy</span>
+                            </label>
+                            <div className="star-input-group">
+                              <input
+                                type="number"
+                                min="1"
+                                value={starRewards[game.id]?.easy || 5}
+                                onChange={(e) => handleStarChange(game.id, 'easy', e.target.value)}
+                              />
+                              <span className="star-icon">⭐</span>
+                            </div>
+                          </div>
+                          <div className="star-row">
+                            <label>
+                              <span className="difficulty-badge medium">Medium</span>
+                            </label>
+                            <div className="star-input-group">
+                              <input
+                                type="number"
+                                min="1"
+                                value={starRewards[game.id]?.medium || 10}
+                                onChange={(e) => handleStarChange(game.id, 'medium', e.target.value)}
+                              />
+                              <span className="star-icon">⭐</span>
+                            </div>
+                          </div>
+                          <div className="star-row">
+                            <label>
+                              <span className="difficulty-badge hard">Hard</span>
+                            </label>
+                            <div className="star-input-group">
+                              <input
+                                type="number"
+                                min="1"
+                                value={starRewards[game.id]?.hard || 15}
+                                onChange={(e) => handleStarChange(game.id, 'hard', e.target.value)}
+                              />
+                              <span className="star-icon">⭐</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="range-disabled">
-                      Using default game ranges
+                      Using default game ranges and star rewards (Easy: 5⭐, Medium: 10⭐, Hard: 15⭐)
                     </div>
                   )}
                 </div>

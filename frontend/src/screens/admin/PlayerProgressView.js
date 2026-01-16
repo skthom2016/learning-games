@@ -161,6 +161,9 @@ function PlayerProgressView() {
           <button className="secondary-button" onClick={() => navigate(`/admin/number-ranges/${playerId}`)}>
             ⚙️ Number Ranges
           </button>
+          <button className="secondary-button" onClick={() => navigate(`/admin/star-rewards/${playerId}`)}>
+            ⭐ Star Rewards
+          </button>
           <button onClick={() => navigate('/admin')}>← Back to Dashboard</button>
         </div>
       </header>

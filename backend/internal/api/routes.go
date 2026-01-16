@@ -25,6 +25,11 @@ func SetupRoutes(router *gin.Engine) {
 		v1.PUT("/players/:player_id/number-ranges", handlers.SetPlayerNumberRanges)
 		v1.DELETE("/players/:player_id/number-ranges/:game_id", handlers.DeletePlayerNumberRange)
 
+		// Player Star Rewards (Admin: custom stars per difficulty level)
+		v1.GET("/players/:player_id/star-rewards", handlers.GetPlayerStarRewards)
+		v1.PUT("/players/:player_id/star-rewards", handlers.SetPlayerStarRewards)
+		v1.DELETE("/players/:player_id/star-rewards/:game_id", handlers.DeletePlayerStarReward)
+
 		// Session Management
 		// TODO: Implement session start/end logic
 		v1.POST("/sessions/start", handlers.StartSession)

@@ -7,15 +7,25 @@ import (
 	"github.com/google/uuid"
 	"github.com/learning-game/backend/internal/database"
 	"github.com/learning-game/backend/internal/models"
+	"github.com/learning-game/backend/internal/services/starrewards"
 )
 
 // RewardEngine handles reward calculation and distribution
-type RewardEngine struct{}
+type RewardEngine struct {
+	starRewardService *starrewards.StarRewardService
+}
+
+// NewRewardEngine creates a new RewardEngine
+func NewRewardEngine() *RewardEngine {
+	return &RewardEngine{
+		starRewardService: &starrewards.StarRewardService{},
+	}
+}
 
 // CalculateStarReward calculates stars earned for a correct answer
-// Always returns 5 stars for every correct answer
-func (e *RewardEngine) CalculateStarReward(masteryState models.MasteryState, difficultyTier int, inRecoveryMode bool) int {
-	return 5
+// Uses player-specific star config or system defaults
+func (e *RewardEngine) CalculateStarReward(playerID, gameID, difficultyLevelID string) int {
+	return e.starRewardService.GetStarRewardForPlayer(playerID, gameID, difficultyLevelID)
 }
 
 // CreateRewardTransaction creates a reward transaction record
