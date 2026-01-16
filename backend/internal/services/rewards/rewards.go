@@ -13,38 +13,9 @@ import (
 type RewardEngine struct{}
 
 // CalculateStarReward calculates stars earned for a correct answer
-// Based on ARCHITECTURE.md Section 5 - Star Earning Matrix
-//
-// Matrix:
-// | Mastery State | Tier 1 | Tier 2 | Tier 3 | Tier 4+ |
-// |---------------|--------|--------|--------|---------|
-// | UNKNOWN       |   5    |   10   |   15   |   20    |
-// | WEAK          |   5    |   10   |   15   |   20    |
-// | LEARNING      |   3    |   10   |   15   |   20    |
-// | STRONG        |   2    |    8   |   12   |   18    |
-// | MASTERED      |   1    |    5   |    8   |   12    |
+// Always returns 5 stars for every correct answer
 func (e *RewardEngine) CalculateStarReward(masteryState models.MasteryState, difficultyTier int, inRecoveryMode bool) int {
-	starMatrix := map[models.MasteryState][]int{
-		models.MasteryStateUnknown:  {5, 10, 15, 20},
-		models.MasteryStateWeak:     {5, 10, 15, 20},
-		models.MasteryStateLearning: {3, 10, 15, 20},
-		models.MasteryStateStrong:   {2, 8, 12, 18},
-		models.MasteryStateMastered: {1, 5, 8, 12},
-	}
-
-	tierIndex := difficultyTier - 1
-	if tierIndex < 0 {
-		tierIndex = 0
-	}
-	if tierIndex >= 4 {
-		tierIndex = 3
-	}
-
-	if stars, ok := starMatrix[masteryState]; ok {
-		return stars[tierIndex]
-	}
-
-	return 5 // Default
+	return 5
 }
 
 // CreateRewardTransaction creates a reward transaction record
