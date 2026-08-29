@@ -31,7 +31,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer db.Close()
+	// Note: Don't close the connection here - it needs to stay open for the application lifetime
+	// defer db.Close()  // REMOVED: Was closing connection immediately after server start
 
 	// Test database connection
 	if err := db.Ping(); err != nil {
@@ -41,6 +42,12 @@ func main() {
 
 	// Initialize database layer
 	database.InitDB(db)
+
+	// Run database migrations
+	migrationsPath := getEnv("MIGRATIONS_PATH", "./migrations")
+	if err := database.RunMigrations(db, migrationsPath); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
 
 	// Setup Gin router
 	router := gin.Default()

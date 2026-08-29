@@ -7,14 +7,26 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/learning-game/backend/internal/models"
+	"github.com/learning-game/backend/internal/services/numberranges"
 )
 
 // AdditionGame implements the addition facts game
 type AdditionGame struct{}
 
 // GenerateQuestion generates an addition question
-func (g *AdditionGame) GenerateQuestion(topicID, difficultyLevelID string, seed int64) (*models.Question, error) {
+func (g *AdditionGame) GenerateQuestion(playerID, topicID, difficultyLevelID string, seed int64) (*models.Question, error) {
 	rng := rand.New(rand.NewSource(seed))
+
+	// Check if player has custom operand-specific ranges
+	operandRanges, hasCustom, err := numberranges.GetOperandRangesForQuestionGeneration(playerID, "addition-facts")
+	if err != nil {
+		hasCustom = false
+	}
+
+	// If custom range is set, use simplified logic based on the range
+	if hasCustom && operandRanges != nil {
+		return g.generateCustomRangeQuestion(rng, topicID, difficultyLevelID, operandRanges)
+	}
 
 	// Topic IDs now represent skill levels, not addends
 	// Format: "add-level-N" where N is the level
@@ -125,6 +137,54 @@ func (g *AdditionGame) GenerateQuestion(topicID, difficultyLevelID string, seed 
 	}
 
 	return question, nil
+}
+
+// generateCustomRangeQuestion generates a question within custom operand ranges
+// For addition: operand1 = addend1 range, operand2 = addend2 range
+func (g *AdditionGame) generateCustomRangeQuestion(rng *rand.Rand, topicID, difficultyLevelID string, ranges *models.OperandRanges) (*models.Question, error) {
+	// Ensure we have valid ranges
+	addend1Min, addend1Max := ranges.Operand1Min, ranges.Operand1Max
+	addend2Min, addend2Max := ranges.Operand2Min, ranges.Operand2Max
+
+	if addend1Max <= addend1Min {
+		addend1Max = addend1Min + 1
+	}
+	if addend2Max <= addend2Min {
+		addend2Max = addend2Min + 1
+	}
+
+	// Generate addends within their respective custom ranges
+	addend1 := rng.Intn(addend1Max-addend1Min+1) + addend1Min
+	addend2 := rng.Intn(addend2Max-addend2Min+1) + addend2Min
+
+	sum := addend1 + addend2
+	level := 1 // Default level for custom ranges
+
+	hintText := g.generateSingleDigitHint(addend1, addend2)
+
+	return &models.Question{
+		QuestionID:        uuid.New().String(),
+		TopicID:           topicID,
+		DifficultyLevelID: difficultyLevelID,
+		QuestionText:      fmt.Sprintf("What is %d + %d?", addend1, addend2),
+		QuestionData: map[string]interface{}{
+			"addend1": addend1,
+			"addend2": addend2,
+			"sum":     sum,
+			"level":   level,
+		},
+		VisualHintData: map[string]interface{}{
+			"hint_type": "counting",
+			"addend1":   addend1,
+			"addend2":   addend2,
+			"sum":       sum,
+			"color":     "blue",
+			"level":     level,
+		},
+		VerbalHint:    hintText,
+		CorrectAnswer: fmt.Sprintf("%d", sum),
+		GeneratedAt:   time.Now(),
+	}, nil
 }
 
 // generateSingleDigitHint provides hints for single-digit addition

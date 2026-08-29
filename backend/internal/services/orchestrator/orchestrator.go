@@ -10,21 +10,23 @@ import (
 	"github.com/learning-game/backend/internal/services/game"
 	"github.com/learning-game/backend/internal/services/learning"
 	"github.com/learning-game/backend/internal/services/platform"
+	"github.com/learning-game/backend/internal/services/progress"
 	"github.com/learning-game/backend/internal/services/rewards"
 )
 
 // GameEngine interface for all game implementations
 type GameEngine interface {
-	GenerateQuestion(topicID, difficultyLevelID string, seed int64) (*models.Question, error)
+	GenerateQuestion(playerID, topicID, difficultyLevelID string, seed int64) (*models.Question, error)
 	ValidateAnswer(correctAnswer, submittedAnswer string) (*models.AnswerValidationResult, error)
 	GetGameDefinition() *models.Game
 }
 
 // GameOrchestrator coordinates all services to manage game flow
 type GameOrchestrator struct {
-	gameEngines     map[string]GameEngine
-	learningEngine  *learning.AdaptiveLearningEngine
-	rewardEngine    *rewards.RewardEngine
+	gameEngines       map[string]GameEngine
+	learningEngine    *learning.AdaptiveLearningEngine
+	rewardEngine      *rewards.RewardEngine
+	progressService   *progress.DifficultyProgressService
 }
 
 // NewGameOrchestrator creates a new orchestrator instance
@@ -38,7 +40,8 @@ func NewGameOrchestrator() *GameOrchestrator {
 	return &GameOrchestrator{
 		gameEngines:     engines,
 		learningEngine:  &learning.AdaptiveLearningEngine{},
-		rewardEngine:    &rewards.RewardEngine{},
+		rewardEngine:    rewards.NewRewardEngine(),
+		progressService: &progress.DifficultyProgressService{},
 	}
 }
 
@@ -104,14 +107,11 @@ func (o *GameOrchestrator) GetNextQuestion(playerID, gameID string) (*models.Que
 		return nil, fmt.Errorf("mastery record not found for topic %s", selectedTopicID)
 	}
 
-	// Get recent accuracy for difficulty selection
-	recentAccuracy, err := o.getRecentAccuracy(playerID, gameID, selectedTopicID, 5)
+	// Get current difficulty level from progress service (easy/medium/hard progression)
+	difficultyLevelID, err := o.progressService.GetCurrentDifficultyLevel(playerID, gameID, selectedTopicID)
 	if err != nil {
 		return nil, err
 	}
-
-	// Select difficulty level
-	difficultyLevelID := o.learningEngine.SelectDifficultyForTopic(selectedMastery, recentAccuracy)
 
 	// Get the appropriate game engine
 	gameEngine, err := o.getGameEngine(gameID)
@@ -121,7 +121,7 @@ func (o *GameOrchestrator) GetNextQuestion(playerID, gameID string) (*models.Que
 
 	// Generate question using game engine
 	seed := time.Now().UnixNano()
-	question, err := gameEngine.GenerateQuestion(selectedTopicID, difficultyLevelID, seed)
+	question, err := gameEngine.GenerateQuestion(playerID, selectedTopicID, difficultyLevelID, seed)
 	if err != nil {
 		return nil, err
 	}
@@ -238,6 +238,12 @@ func (o *GameOrchestrator) ProcessAnswer(req ProcessAnswerRequest) (*ProcessAnsw
 		return nil, err
 	}
 
+	// Update difficulty progression (easy/medium/hard based on consecutive correct/wrong)
+	_, _, err = o.progressService.UpdateProgressAfterAnswer(req.PlayerID, req.GameID, req.TopicID, validationResult.IsCorrect)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update difficulty progression: %w", err)
+	}
+
 	// Get all recent attempts for confidence recovery check
 	recentAttempts, err := o.getAllRecentAttempts(tx, req.PlayerID, req.GameID, 7)
 	if err != nil {
@@ -287,7 +293,7 @@ func (o *GameOrchestrator) ProcessAnswer(req ProcessAnswerRequest) (*ProcessAnsw
 	// If correct, calculate and award stars
 	starsEarned := 0
 	if validationResult.IsCorrect {
-		starsEarned = o.rewardEngine.CalculateStarReward(newMasteryState, difficultyTier, profile.ConfidenceRecoveryModeActive)
+		starsEarned = o.rewardEngine.CalculateStarReward(req.PlayerID, req.GameID, req.DifficultyLevelID)
 
 		// Create reward transaction
 		transactionID := uuid.New().String()
@@ -378,6 +384,12 @@ func (o *GameOrchestrator) initializeMasteryRecords(playerID, gameID string) ([]
 			return nil, err
 		}
 		topicIDs = append(topicIDs, topicID)
+	}
+
+	// Initialize difficulty progress for all topics (start at easy)
+	err = o.progressService.InitializeProgressForTopics(playerID, gameID, topicIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize difficulty progress: %w", err)
 	}
 
 	// Create mastery record for each topic

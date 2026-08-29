@@ -44,15 +44,32 @@ function PlayerSelectionScreen() {
   };
 
   const handleAddPlayer = async () => {
-    if (!newPlayerName.trim()) return;
+    if (!newPlayerName.trim()) {
+      alert('Please enter a player name');
+      return;
+    }
 
     try {
-      await api.createPlayer(newPlayerName);
+      console.log('Creating player:', newPlayerName);
+      const response = await api.createPlayer(newPlayerName);
+      console.log('Player created response:', response);
+
       setShowAddPlayer(false);
       setNewPlayerName('');
-      loadPlayers();
+      await loadPlayers();
+
+      // Show success message
+      alert(`${newPlayerName} has been added!`);
     } catch (error) {
       console.error('Failed to create player:', error);
+
+      let errorMsg = 'Failed to add player';
+      if (error.response) {
+        errorMsg += `\n\nStatus: ${error.response.status}\nError: ${JSON.stringify(error.response.data)}`;
+      } else if (error.message) {
+        errorMsg += `\n\nError: ${error.message}`;
+      }
+      alert(errorMsg);
     }
   };
 
@@ -104,6 +121,11 @@ function PlayerSelectionScreen() {
           </div>
         </div>
       )}
+
+      {/* Subtle admin link for parents */}
+      <div className="admin-link">
+        <button onClick={() => navigate('/admin/login')}>Admin</button>
+      </div>
     </div>
   );
 }

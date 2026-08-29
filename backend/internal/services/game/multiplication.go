@@ -9,13 +9,25 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/learning-game/backend/internal/models"
+	"github.com/learning-game/backend/internal/services/numberranges"
 )
 
 // MultiplicationGame implements the multiplication tables game
 type MultiplicationGame struct{}
 
 // GenerateQuestion generates a multiplication question
-func (g *MultiplicationGame) GenerateQuestion(topicID, difficultyLevelID string, seed int64) (*models.Question, error) {
+func (g *MultiplicationGame) GenerateQuestion(playerID, topicID, difficultyLevelID string, seed int64) (*models.Question, error) {
+	// Check if player has custom operand-specific ranges
+	operandRanges, hasCustom, err := numberranges.GetOperandRangesForQuestionGeneration(playerID, "multiplication-tables")
+	if err != nil {
+		hasCustom = false
+	}
+
+	// If custom range is set, use simplified logic based on the range
+	if hasCustom && operandRanges != nil {
+		rng := rand.New(rand.NewSource(seed))
+		return g.generateCustomRangeQuestion(rng, topicID, difficultyLevelID, operandRanges)
+	}
 	// Parse topic to get multiplier (e.g., "times-7" -> 7)
 	parts := strings.Split(topicID, "-")
 	if len(parts) != 2 {
@@ -182,6 +194,48 @@ func (g *MultiplicationGame) getFeedbackMessage(isCorrect bool) string {
 	}
 	messages := []string{"Not quite, but close!", "Let's try another one!", "Good try!", "Almost there!"}
 	return messages[rand.Intn(len(messages))]
+}
+
+// generateCustomRangeQuestion generates a question within custom operand ranges
+// operandRanges contains separate min/max for each factor
+func (g *MultiplicationGame) generateCustomRangeQuestion(rng *rand.Rand, topicID, difficultyLevelID string, ranges *models.OperandRanges) (*models.Question, error) {
+	// Ensure we have valid ranges
+	op1Min, op1Max := ranges.Operand1Min, ranges.Operand1Max
+	op2Min, op2Max := ranges.Operand2Min, ranges.Operand2Max
+
+	if op1Max <= op1Min {
+		op1Max = op1Min + 1
+	}
+	if op2Max <= op2Min {
+		op2Max = op2Min + 1
+	}
+
+	// Generate operands within their respective custom ranges
+	operand1 := rng.Intn(op1Max-op1Min+1) + op1Min
+	operand2 := rng.Intn(op2Max-op2Min+1) + op2Min
+
+	correctAnswer := operand1 * operand2
+
+	return &models.Question{
+		QuestionID:        uuid.New().String(),
+		TopicID:           topicID,
+		DifficultyLevelID: difficultyLevelID,
+		QuestionText:      fmt.Sprintf("What is %d × %d?", operand1, operand2),
+		QuestionData: map[string]interface{}{
+			"operand1": operand1,
+			"operand2": operand2,
+			"product":  correctAnswer,
+		},
+		VisualHintData: map[string]interface{}{
+			"hint_type": "dot-array",
+			"rows":      operand1,
+			"cols":      operand2,
+			"color":     "blue",
+		},
+		VerbalHint:    g.generateVerbalHint(operand1, operand2),
+		CorrectAnswer: fmt.Sprintf("%d", correctAnswer),
+		GeneratedAt:   time.Now(),
+	}, nil
 }
 
 // GetGameDefinition returns the game metadata

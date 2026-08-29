@@ -3,10 +3,11 @@
 -- CASCADE delete will remove all related data (attempts, mastery, rewards, etc.)
 
 -- First, ensure David and Daniel exist (create them if they don't)
+-- Using proper UUID format (8-4-4-4-12 hexadecimal characters)
 INSERT INTO players (player_id, player_name, created_at, last_played_at, total_session_count)
 VALUES
-    ('david-uuid-1234', 'David', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
-    ('daniel-uuid-5678', 'Daniel', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+    ('00000000-0000-0000-0000-000000000001', 'David', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+    ('00000000-0000-0000-0000-000000000002', 'Daniel', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
 ON CONFLICT (player_id) DO NOTHING;
 
 -- Delete all other players and their associated data
